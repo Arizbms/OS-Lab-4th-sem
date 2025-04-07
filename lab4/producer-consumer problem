@@ -1,46 +1,52 @@
-#include<stdio.h>
-#include<stdlib.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define BUFFER_SIZE 5
 
-int mutex=0,empty=0,full=0,x=0;
+int mutex = 1, empty = BUFFER_SIZE, full = 0, x = 0;
 
-void wait(int *o){
-    --*o;
-}
+void wait(int *s) { --*s; }
+void signal(int *s) { ++*s; }
 
-void signal(int *p){
-    ++*p;
-}
-
-void producer(){
+void producer() {
     wait(&empty);
     wait(&mutex);
-    if(x==BUFFER_SIZE){printf("Buffer is full!");return;}
-    x++;
-    printf("Producer has produced item %d",x);
-    signal(&full);
+    if (x == BUFFER_SIZE) {
+        printf("Buffer is full!\n");
+    } else {
+        x++;
+        printf("Producer has produced item %d\n", x);
+    }
     signal(&mutex);
+    signal(&full);
 }
 
-void consumer(){
-    wait(&mutex);
+void consumer() {
     wait(&full);
-    if(x<=0){printf("BUffer is empty!");x=0;return;}else{
-    printf("Consumer has consumed item %d",x);
-    x--;
-    signal(&empty);
+    wait(&mutex);
+    if (x <= 0) {
+        printf("Buffer is empty!\n");
+        x = 0;
+    } else {
+        printf("Consumer has consumed item %d\n", x);
+        x--;
+    }
     signal(&mutex);
-}}
+    signal(&empty);
+}
 
-void main(){
+int main() {
+    int n;
     printf("Enter 1.Producer 2.Consumer 3.Exit\n");
-while(1){
-printf("Enter your choice: ");
-int n;
-scanf("%d",&n);
-switch(n){
-    case 1:producer();break;
-    case 2:consumer();break;
-    case 3:exit(0);
-}}}
+    while (1) {
+        printf("Enter your choice: ");
+        scanf("%d", &n);
+        switch(n) {
+            case 1: producer(); break;
+            case 2: consumer(); break;
+            case 3: exit(0);
+            default: printf("Invalid choice!\n");
+        }
+    }
+    return 0;
+}
