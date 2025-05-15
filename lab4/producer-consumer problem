@@ -50,3 +50,17 @@ int main() {
     }
     return 0;
 }
+
+O/p:
+Enter 1.Producer 2.Consumer 3.Exit
+Enter your choice: 2
+Buffer is empty!
+Enter your choice: 1
+Producer has produced item 1
+Enter your choice: 1
+Producer has produced item 2
+Enter your choice: 1
+Producer has produced item 3
+Enter your choice: 2
+Consumer has consumed item 3
+Enter your choice: 3
