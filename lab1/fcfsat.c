@@ -5,56 +5,57 @@ int main() {
     printf("Enter number of processes: ");
     scanf("%d", &n);
 
-    int bt[n], at[n], wt[n], tat[n], completed[n], process[n];
-    int current_time = 0;
-    float wtavg = 0, tatavg = 0;
+    int at[n], bt[n], tat[n], wt[n], completed[n];
+    float total_wt = 0, total_tat = 0;
+    int current_time = 0, total_completed = 0;
 
-    printf("Enter burst times of each process:\n");
+    printf("Enter burst time for each process:\n");
     for (int i = 0; i < n; i++) {
         scanf("%d", &bt[i]);
-        process[i] = i;
         completed[i] = 0;
     }
 
-    printf("Enter arrival times of each process:\n");
+    printf("Enter arrival time for each process:\n");
     for (int i = 0; i < n; i++) {
         scanf("%d", &at[i]);
     }
 
-    // Sort by arrival time (stable FCFS)
-    for (int i = 0; i < n - 1; i++) {
-        for (int j = i + 1; j < n; j++) {
-            if (at[j] < at[i]) {
-                // Swap arrival time
-                int temp = at[i]; at[i] = at[j]; at[j] = temp;
-                // Swap burst time
-                temp = bt[i]; bt[i] = bt[j]; bt[j] = temp;
-                // Swap process ID
-                temp = process[i]; process[i] = process[j]; process[j] = temp;
+    while (total_completed < n) {
+        int idx = -1;
+        int min_at = 1e9;
+
+        for (int i = 0; i < n; i++) {
+            if (!completed[i] && at[i] <= current_time && at[i] < min_at) {
+                min_at = at[i];
+                idx = i;
             }
         }
-    }
 
-    for (int i = 0; i < n; i++) {
-        if (current_time < at[i]) {
-            current_time = at[i];  // Wait if process hasn't arrived
+        if (idx == -1) {
+            current_time++; // No process has arrived yet
+            continue;
         }
 
-        wt[i] = current_time - at[i];
-        tat[i] = wt[i] + bt[i];
-        current_time += bt[i];
+        wt[idx] = current_time - at[idx];
+        if (wt[idx] < 0) wt[idx] = 0;
 
-        wtavg += wt[i];
-        tatavg += tat[i];
+        current_time += bt[idx];
+        tat[idx] = wt[idx] + bt[idx];
+
+        completed[idx] = 1;
+        total_completed++;
+
+        total_wt += wt[idx];
+        total_tat += tat[idx];
     }
 
     printf("\nProcess\tAT\tBT\tWT\tTAT\n");
     for (int i = 0; i < n; i++) {
-        printf("%d\t%d\t%d\t%d\t%d\n", process[i] + 1, at[i], bt[i], wt[i], tat[i]);
+        printf("%d\t%d\t%d\t%d\t%d\n", i + 1, at[i], bt[i], wt[i], tat[i]);
     }
 
-    printf("\nAverage Turnaround Time: %.2f", tatavg / n);
-    printf("\nAverage Waiting Time: %.2f", wtavg / n);
+    printf("\nAverage Waiting Time: %.2f", total_wt / n);
+    printf("\nAverage Turnaround Time: %.2f\n", total_tat / n);
 
     return 0;
 }
