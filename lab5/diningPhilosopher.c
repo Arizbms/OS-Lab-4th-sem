@@ -47,35 +47,41 @@ void simulate_one_eating() {
 
 void simulate_two_eating() {
   printf("\nSimulation: Two philosophers eat at a time\n");
-  int remaining = N;
+
+  int remaining = 0;
+  for (int i = 0; i < N; i++)
+    if (!finished[i]) remaining++;
 
   while (remaining > 0) {
-    int ate = 0;
+    int found_pair = 0;
 
+    // Try to find a valid pair
     for (int i = 0; i < N; i++) {
-      if (!finished[i]) {
-        int paired = 0;
+      if (finished[i] || !forks_available(i)) continue;
 
-        for (int j = i + 1; j < N; j++) {
-          if (!finished[j] && forks_available(i) && forks_available(j) && !overlap(i, j)) {
-            eat(i);
-            eat(j);
-            printf("Philosophers %d and %d have finished eating\n", i + 1, j + 1);
-            remaining -= 2;
-            paired = 1;
-            ate = 1;
-            break;
-          }
-        }
+      for (int j = i + 1; j < N; j++) {
+        if (finished[j] || !forks_available(j) || overlap(i, j)) continue;
 
-        if (!paired && forks_available(i)) {
+        eat(i);
+        eat(j);
+        printf("Philosophers %d and %d have finished eating\n", i + 1, j + 1);
+        remaining -= 2;
+        found_pair = 1;
+        break;
+      }
+
+      if (found_pair) break;
+    }
+
+    // If no valid pair found, let one eat alone
+    if (!found_pair) {
+      for (int i = 0; i < N; i++) {
+        if (!finished[i] && forks_available(i)) {
           eat(i);
           printf("Philosopher %d has finished eating\n", i + 1);
           remaining--;
-          ate = 1;
+          break;
         }
-
-        if (ate) break;
       }
     }
   }
