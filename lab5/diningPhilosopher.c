@@ -37,17 +37,10 @@ int overlap(int i, int j) {
 
 void simulate_one_eating() {
   printf("\nSimulation: One philosopher eats at a time\n");
-  int all_finished = 0;
-
-  while (!all_finished) {
-    all_finished = 1;
-    for (int i = 0; i < N; i++) {
-      if (!finished[i]) {
-        think(i);
-        eat(i);
-        all_finished = 0;
-        break;
-      }
+  for (int i = 0; i < N; i++) {
+    if (!finished[i]) {
+      think(i);
+      eat(i);
     }
   }
 }
