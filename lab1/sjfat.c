@@ -52,3 +52,20 @@ int main() {
 
     return 0;
 }
+
+
+O/p:
+Enter no of processes: 4
+Enter burst time of each process:
+6 8 7 3
+Enter arrival time of each process:
+0 0 0 0
+
+Process	AT	BT	WT	TAT
+1	0	6	3	9
+2	0	8	16	24
+3	0	7	9	16
+4	0	3	0	3
+
+Average turnaround time: 13.00
+Average waiting time: 7.00
