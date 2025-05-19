@@ -1,74 +1,149 @@
 #include <stdio.h>
-#include <stdlib.h>
 
 #define N 5
 
-int chopstick[N] = {1, 1, 1, 1, 1}; // 1 = available, 0 = taken
-int mutex = 1;
-int eating = 0; // how many philosophers are currently eating
+int forks[N] = {1, 1, 1, 1, 1};
+int finished[N] = {0};
 
-void wait(int *s) { --(*s); }
-void signal(int *s) { ++(*s); }
-
-void take_chopsticks(int i) {
-    wait(&chopstick[i]);
-    wait(&chopstick[(i + 1) % N]);
+void wait(int *sem) {
+  while (*sem <= 0);
+  (*sem)--;
 }
 
-void put_chopsticks(int i) {
-    signal(&chopstick[i]);
-    signal(&chopstick[(i + 1) % N]);
+void signal(int *sem) {
+  (*sem)++;
+}
+
+void think(int i) {
+  printf("Philosopher %d is thinking\n", i + 1);
 }
 
 void eat(int i) {
-    printf("Philosopher %d is eating\n", i + 1);
-    printf("Philosopher %d finished eating\n", i + 1);
+  wait(&forks[i]);
+  wait(&forks[(i + 1) % N]);
+  printf("Philosopher %d is eating\n", i + 1);
+  signal(&forks[i]);
+  signal(&forks[(i + 1) % N]);
+  finished[i] = 1;
 }
 
-void try_to_eat(int i, int maxEating) {
-    wait(&mutex);
-    
-    if (chopstick[i] == 1 && chopstick[(i + 1) % N] == 1 && eating < maxEating) {
-        take_chopsticks(i);
-        eating++;
-        eat(i);
-        put_chopsticks(i);
-        eating--;
-    } else {
-        printf("Philosopher %d cannot eat now (blocked)\n", i + 1);
-    }
+int forks_available(int i) {
+  return forks[i] && forks[(i + 1) % N];
+}
 
-    signal(&mutex);
+int overlap(int i, int j) {
+  return i == j || i == (j + 1) % N || (i + 1) % N == j || (i + 1) % N == (j + 1) % N;
+}
+
+void simulate_one_eating() {
+  printf("\nSimulation: One philosopher eats at a time\n");
+  int all_finished = 0;
+
+  while (!all_finished) {
+    all_finished = 1;
+    for (int i = 0; i < N; i++) {
+      if (!finished[i]) {
+        think(i);
+        eat(i);
+        all_finished = 0;
+        break;
+      }
+    }
+  }
+}
+
+void simulate_two_eating() {
+  printf("\nSimulation: Two philosophers eat at a time\n");
+  int remaining = N;
+
+  while (remaining > 0) {
+    int ate = 0;
+
+    for (int i = 0; i < N; i++) {
+      if (!finished[i]) {
+        int paired = 0;
+
+        for (int j = i + 1; j < N; j++) {
+          if (!finished[j] && forks_available(i) && forks_available(j) && !overlap(i, j)) {
+            eat(i);
+            eat(j);
+            printf("Philosophers %d and %d have finished eating\n", i + 1, j + 1);
+            remaining -= 2;
+            paired = 1;
+            ate = 1;
+            break;
+          }
+        }
+
+        if (!paired && forks_available(i)) {
+          eat(i);
+          printf("Philosopher %d has finished eating\n", i + 1);
+          remaining--;
+          ate = 1;
+        }
+
+        if (ate) break;
+      }
+    }
+  }
 }
 
 int main() {
-    int mode, count, pos[5];
+  int hungry_count;
+  printf("Enter number of hungry philosophers (0 to %d): ", N);
+  scanf("%d", &hungry_count);
 
-    printf("Enter total number of hungry philosophers: ");
-    scanf("%d", &count);
+  if (hungry_count < 0 || hungry_count > N) {
+    printf("Invalid number.\n");
+    return 1;
+  }
 
-    for (int i = 0; i < count; i++) {
-        printf("Enter position of hungry philosopher %d (1-5): ", i + 1);
-        scanf("%d", &pos[i]);
-        pos[i]--; // adjust for 0-based index
+  int hungry[N] = {0};
+  printf("Enter positions (1 to %d) of hungry philosophers:\n", N);
+
+  for (int i = 0; i < hungry_count; i++) {
+    int pos;
+    scanf("%d", &pos);
+    if (pos < 1 || pos > N) {
+      printf("Invalid position.\n");
+      return 1;
     }
+    hungry[pos - 1] = 1;
+  }
 
-    while (1) {
-        printf("\n1. Allow ONE philosopher to eat at a time\n");
-        printf("2. Allow TWO philosophers to eat at a time\n");
-        printf("3. Exit\n");
-        printf("Enter your choice: ");
-        scanf("%d", &mode);
+  for (int i = 0; i < N; i++)
+    finished[i] = hungry[i] ? 0 : 1;
 
-        if (mode == 3) break;
+  simulate_one_eating();
 
-        int maxEating = (mode == 1) ? 1 : 2;
+  // Reset state
+  for (int i = 0; i < N; i++) {
+    forks[i] = 1;
+    finished[i] = hungry[i] ? 0 : 1;
+  }
 
-        for (int i = 0; i < count; i++) {
-            printf("Philosopher %d is trying to eat...\n", pos[i] + 1);
-            try_to_eat(pos[i], maxEating);
-        }
-    }
+  simulate_two_eating();
 
-    return 0;
+  return 0;
 }
+
+
+O/p:
+Enter number of hungry philosophers (0 to 5): 3
+Enter positions (1 to 5) of hungry philosophers:
+1 2 5
+
+Simulation: One philosopher eats at a time
+Philosopher 1 is thinking
+Philosopher 1 is eating
+Philosopher 2 is thinking
+Philosopher 2 is eating
+Philosopher 5 is thinking
+Philosopher 5 is eating
+
+Simulation: Two philosophers eat at a time
+Philosopher 1 is eating
+Philosopher 1 has finished eating
+Philosopher 2 is eating
+Philosopher 5 is eating
+Philosophers 2 and 5 have finished eating
